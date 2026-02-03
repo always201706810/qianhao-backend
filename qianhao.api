@@ -1,0 +1,473 @@
+syntax = "v1"
+
+info(
+	title: "抢号系统"
+	desc: "靓号抢号系统后端"
+	author: "Gemini"
+	version: "1.0"
+)
+
+// =============================
+// 1. 基础结构体定义
+// =============================
+// 分页请求 (GET请求用 form)
+type PageReq {
+	Page int `form:"page"`
+	Size int `form:"size"`
+}
+
+// 通用删除请求 (POST请求用 json)
+type DeleteReq {
+	Id int `json:"id"`
+}
+// --- 登录 ---
+type LoginReq {
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	CaptchaId string `json:"captcha_id"` // 验证码ID
+	Captcha   string `json:"captcha"`    // 用户输入的验证码
+}
+
+//type LoginRes {
+//	Token string `json:"token"`
+//}
+
+// 返回角色
+type LoginRes {
+	Token      string `json:"token"`
+	Username   string `json:"username"`
+	Role       string `json:"role"` // 关键字段
+	NickName   string `json:"nick_name"`
+	DistrictId int    `json:"district_id"` // 方便前端判断归属
+}
+
+// 2. 新增：获取验证码的响应
+type CaptchaRes {
+	CaptchaId string `json:"captcha_id"`
+	Base64    string `json:"base64"` // 验证码图片的 Base64 字符串
+}
+
+// --- 地区 ---
+type DistrictInfo {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type DistrictListRes {
+	List []DistrictInfo `json:"list"`
+}
+
+// --- 号码 ---
+//type PhoneInfo {
+//	Id          int    `json:"id"`
+//	PhoneNumber string `json:"phone_number"`
+//	Category    string `json:"category"`
+//	Grade       int    `json:"grade"`
+//	Status      int    `json:"status"`
+//}
+// 1. 修改 PhoneInfo：增加归属区县信息
+type PhoneInfo {
+	Id           int    `json:"id"`
+	PhoneNumber  string `json:"phone_number"`
+	Category     string `json:"category"`
+	Grade        int    `json:"grade"`
+	Status       int    `json:"status"`
+	DistrictName string `json:"district_name"` // <--- 新增：显示区县名
+	DistrictId   int    `json:"district_id"`   // <--- 新增：编辑回显用
+}
+
+// 导入相关
+type ImportItem {
+	PhoneNumber string `json:"phone_number"`
+	Category    string `json:"category"`
+	Grade       int    `json:"grade"`
+}
+
+type ImportPhonesReq {
+	List []ImportItem `json:"list"`
+}
+
+type ImportPhonesRes {
+	SuccessCount int `json:"success_count"`
+}
+
+// 列表查询相关
+type PhoneListReq {
+	Category string `form:"category,optional"`
+	Grade    int    `form:"grade,optional"`
+	Page     int    `form:"page"`
+	Size     int    `form:"size"`
+}
+
+type PhoneListRes {
+	Total int         `json:"total"`
+	List  []PhoneInfo `json:"list"`
+}
+
+type DeletePhoneReq {
+	Id int `json:"id"`
+}
+
+//type UpdatePhoneReq {
+//	Id          int    `json:"id"`
+//	PhoneNumber string `json:"phone_number"`
+//	Category    string `json:"category"`
+//	Grade       int    `json:"grade"`
+//}
+// 2. 修改 UpdatePhoneReq：增加 DistrictId
+type UpdatePhoneReq {
+	Id          int    `json:"id"`
+	PhoneNumber string `json:"phone_number"`
+	Category    string `json:"category"`
+	Grade       int    `json:"grade"`
+	DistrictId  int    `json:"district_id,optional"` // <--- 新增：允许修改关联订单的区县
+}
+
+// --- 订单 ---
+type OrderCreateReq {
+	CustomerName    string `json:"customer_name"`
+	CustomerPhone   string `json:"customer_phone"`
+	CustomerAddress string `json:"customer_address"`
+	PhoneId         int    `json:"phone_id"`
+	DistrictId      int    `json:"district_id"`
+}
+// --- 新增：订单管理结构体 ---
+type OrderItem {
+	Id              int    `json:"id"`
+	CustomerName    string `json:"customer_name"`
+	CustomerPhone   string `json:"customer_phone"`
+	CustomerAddress string `json:"customer_address"`
+	PhoneNumber     string `json:"phone_number"` // 关联查询出来的号码
+	Category        string `json:"category"`
+	Status          int    `json:"status"`
+	ApplyTime       string `json:"apply_time"`
+}
+
+type OrderListReq {
+	Page    int    `form:"page"`
+	Size    int    `form:"size"`
+	Status  int    `form:"status,optional"`  // 1-待沟通, 2-已办理...
+	Keyword string `form:"keyword,optional"` // <--- 新增：用于模糊搜索
+
+	// 新增这三个
+	PhoneNumber   string `form:"phone_number,optional"`   // 搜意向号码
+	CustomerName  string `form:"customer_name,optional"`  // 搜客户名
+	CustomerPhone string `form:"customer_phone,optional"` // 搜客户电话
+}
+
+type OrderListRes {
+	Total int         `json:"total"`
+	List  []OrderItem `json:"list"`
+}
+
+//type HandleOrderReq {
+//	OrderId int `json:"order_id"`
+//	Action  int `json:"action"` // 2-办理成功, 3-拒绝/释放
+//}
+
+// 修改后：增加 district_id (可选，如果不改传0或原值)
+type HandleOrderReq {
+	OrderId    int `json:"order_id"`
+	Action     int `json:"action"`
+	DistrictId int `json:"district_id,optional"` // <--- 新增
+}
+
+// --- 新增：统计分析相关 ---
+
+type DistrictStat {
+	DistrictName  string `json:"district_name"`
+	PendingCount  int64  `json:"pending_count"`  // 该区县待处理
+	SoldCount     int64  `json:"sold_count"`     // 该区县已办理
+	RejectedCount int64  `json:"rejected_count"` // 新增 已拒绝
+}
+
+type AnalysisRes {
+	TotalPhones    int64          `json:"total_phones"`    // 号码池总数
+	SoldPhones     int64          `json:"sold_phones"`     // 已办理/已售出总数
+	PendingOrders  int64          `json:"pending_orders"`  // 当前待处理订单数
+	RejectedOrders int64          `json:"rejected_orders"` // 已拒绝订单数
+	DistrictStats  []DistrictStat `json:"district_stats"`  // 区县统计数据
+}
+
+type UserInfo {
+	Id           int    `json:"id"`
+	Username     string `json:"username"`
+	NickName     string `json:"nick_name"`
+	Role         string `json:"role"`          // admin, import_admin, district_admin
+	DistrictId   int    `json:"district_id"`   // 0 表示不限
+	DistrictName string `json:"district_name"` // 用于列表展示
+	CreateTime   string `json:"create_time"`
+}
+
+type UserListRes {
+	List  []UserInfo `json:"list"`
+	Total int        `json:"total"`
+}
+
+type AddUserReq {
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	NickName   string `json:"nick_name"`
+	Role       string `json:"role"`                 // 必填
+	DistrictId int    `json:"district_id,optional"` // 选填，仅 district_admin 需要
+}
+
+type UpdateUserReq {
+	Id         int    `json:"id"`
+	NickName   string `json:"nick_name"`
+	Role       string `json:"role"`
+	DistrictId int    `json:"district_id,optional"`
+	Password   string `json:"password,optional"` // 留空则不修改
+}
+
+// --- 日志相关 ---
+
+type LogItem {
+	Id         int64  `json:"id"`
+	Username   string `json:"username"`
+	Action     string `json:"action"`
+	Ip         string `json:"ip"`
+	Ua         string `json:"ua"` // 浏览器信息
+	CreateTime string `json:"create_time"`
+}
+
+type LogListReq {
+	Page     int    `form:"page"`
+	Size     int    `form:"size"`
+	Username string `form:"username,optional"`
+}
+
+type LogListRes {
+	List  []LogItem `json:"list"`
+	Total int       `json:"total"`
+}
+
+// ==========================================
+//   小程序端接口定义 (Mini Program)
+// ==========================================
+
+// 1. 号码列表
+type (
+	MiniNumberItem {
+		Id         int     `json:"id"`
+		FullNumber string  `json:"fullNumber"`
+		Level      int     `json:"level"`
+		LevelName  string  `json:"levelName"`
+		Price      float64 `json:"price"` // ✅ 新增价格
+		Category   string  `json:"category"`
+		IsLocked   bool    `json:"isLocked"`
+		Tag        string  `json:"tag"`
+	}
+	MiniNumberListReq {
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+		Category string `form:"category,optional"`
+		Level    int    `form:"level,optional"`
+		Keyword  string `form:"keyword,optional"`
+	}
+	MiniNumberListRes {
+		List    []MiniNumberItem `json:"list"`
+		Total   int              `json:"total"`
+		HasMore bool             `json:"hasMore"`
+	}
+)
+
+// 2. 检查状态
+type (
+	CheckStatusReq {
+		NumberId   int    `json:"numberId"`
+		FullNumber string `json:"fullNumber"`
+		Openid     string `json:"openid"`
+	}
+	CheckStatusRes {
+		IsLocked   bool    `json:"isLocked"`
+		LockedByMe bool    `json:"lockedByMe"`
+		Price      float64 `json:"price"` // ✅ 返回价格方便前端计算
+	}
+)
+
+// 3. 提交订单
+type (
+	SelectedNumber {
+		Id         int     `json:"id"`
+		FullNumber string  `json:"fullNumber"`
+		Price      float64 `json:"price"`
+	}
+	// ✅ 重命名为 MiniCustomerInfo 避免冲突
+	MiniCustomerInfo {
+		Name       string `json:"name"`
+		Phone      string `json:"phone"`
+		DistrictId int    `json:"districtId"` //  新增：用户选择的区县ID
+		Address    string `json:"address"`
+		Remark     string `json:"remark,optional"`
+	}
+	SubmitOrderReq {
+		Openid          string           `json:"openid"`
+		UserInfo        MiniCustomerInfo `json:"userInfo"` //  使用新名字
+		SelectedNumbers []SelectedNumber `json:"selectedNumbers"`
+		ApplyTime       string           `json:"applyTime,optional"` // 后端忽略此字段，使用 time.Now()
+	}
+	SubmitOrderRes {
+		OrderId    string `json:"orderId"`
+		Status     string `json:"status"`
+		ExpireTime string `json:"expireTime"`
+	}
+)
+
+// 4. Banner
+type (
+	BannerRes {
+		Image    string `json:"image"`
+		Title    string `json:"title"`
+		Subtitle string `json:"subtitle"`
+	}
+)
+
+// 5. 历史记录
+type (
+	HistoryOrder {
+		Id         string  `json:"id"`
+		OrderId    string  `json:"orderId"`
+		Number     string  `json:"number"`
+		Type       string  `json:"type"`
+		Level      string  `json:"level"`
+		Status     string  `json:"status"`
+		StatusText string  `json:"statusText"`
+		Price      float64 `json:"price"`
+		Time       string  `json:"time"` // 返回时间戳字符串
+	}
+	HistoryReq {
+		Openid   string `form:"openid"`
+		Status   string `form:"status,optional"`
+		Page     int    `form:"page"`
+		PageSize int    `form:"pageSize"`
+	}
+	HistoryRes {
+		List  []HistoryOrder `json:"list"`
+		Total int            `json:"total"`
+	}
+)
+
+// 6. 微信登录
+type (
+	WxLoginReq {
+		Code string `form:"code"`
+	}
+	WxLoginRes {
+		Openid string `json:"openid"`
+		Token  string `json:"token"` // 这里可以返回 openid 作为临时 token
+		Expire int64  `json:"expire"`
+	}
+)
+
+// =============================
+// 2. 接口服务定义
+// =============================
+
+// 公开接口 (不需要 Token)
+@server(
+	group: auth
+)
+service qianhao-api {
+	// 3. 新增：获取图形验证码接口
+	@handler GetCaptcha
+	get /api/v1/base/captcha returns (CaptchaRes)
+
+	@handler Login
+	post /api/v1/user/login (LoginReq) returns (LoginRes)
+}
+
+// 管理接口 (需要 Token)
+@server(
+	jwt:   Auth
+	group: manage
+)
+service qianhao-api {
+	// 1. 获取地区列表
+	@handler GetDistricts
+	get /api/v1/district/list returns (DistrictListRes)
+
+	// 2. 导入号码
+	@handler ImportPhones
+	post /api/v1/phone/import (ImportPhonesReq) returns (ImportPhonesRes)
+
+	// 3. 号码列表 (这就是你刚才缺少的！)
+	@handler ListPhones
+	get /api/v1/phone/list (PhoneListReq) returns (PhoneListRes)
+
+	// 4. 提交抢号订单 (这也是新加的)
+	@handler CreateOrder
+	post /api/v1/order/create (OrderCreateReq) returns (LoginRes)
+
+	// ... (之前的接口) ...
+
+	// 新增：获取订单列表 (给Pending/Completed页面用)
+	@handler ListOrders
+	get /api/v1/order/list (OrderListReq) returns (OrderListRes)
+
+	// 新增：处理订单 (办理或拒绝)
+	@handler HandleOrder
+	post /api/v1/order/handle (HandleOrderReq) returns (LoginRes)
+
+	// 新增：删除号码接口
+	@handler DeletePhone
+	post /api/v1/phone/delete (DeletePhoneReq) returns (LoginRes)
+
+	// 新增：更新号码信息
+	@handler UpdatePhone
+	post /api/v1/phone/update (UpdatePhoneReq) returns (LoginRes)
+
+	// 新增：获取仪表盘分析数据
+	@handler GetAnalysis
+	get /api/v1/analysis/dashboard returns (AnalysisRes)
+}
+
+@server(
+	jwt:   Auth
+	group: system
+)
+service qianhao-api {
+	@handler UserList
+	get /api/v1/system/user/list (PageReq) returns (UserListRes)
+
+	@handler AddUser
+	post /api/v1/system/user/add (AddUserReq) returns (LoginRes)
+
+	@handler UpdateUser
+	post /api/v1/system/user/update (UpdateUserReq) returns (LoginRes)
+
+	@handler DeleteUser
+	post /api/v1/system/user/delete (DeleteReq) returns (LoginRes)
+	// ... 其他接口 ...
+	@handler GetLogList
+	get /api/v1/system/logs (LogListReq) returns (LogListRes)
+
+	// 还需要一个获取区县列表的接口给前端下拉框用（之前写过 open/district，这里需要鉴权的 ）
+	// 为了方便，我们在 UserListLogic 里直接调用之前的 DistrictListLogic 或者前端复用之前的接口
+	// 这里暂时不需要额外写，前端复用 /api/v1/base/district 即可
+}
+
+// --- 服务定义 ---
+@server(
+	group: mini
+	prefix: /api/v1/mini
+)
+service qianhao-api {
+	@handler GetNumbers
+	get /numbers (MiniNumberListReq) returns (MiniNumberListRes)
+
+	@handler CheckStatus
+	post /numbers/check-status (CheckStatusReq) returns (CheckStatusRes)
+
+	@handler SubmitOrder
+	post /orders (SubmitOrderReq) returns (SubmitOrderRes)
+
+	@handler GetBanner
+	get /banner returns (BannerRes)
+
+	@handler GetHistory
+	get /orders/history (HistoryReq) returns (HistoryRes)
+
+	@handler WxLogin
+	get /openid (WxLoginReq) returns (WxLoginRes)
+}
