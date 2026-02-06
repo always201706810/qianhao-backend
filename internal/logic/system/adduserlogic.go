@@ -47,7 +47,7 @@ func (l *AddUserLogic) AddUser(req *types.AddUserReq) (resp *types.LoginRes, err
 	user := model.SysUser{
 		Username: req.Username,
 		Password: req.Password,
-		// ✅ 修改这里：把前端传来的 NickName 存入数据库的 RealName
+		//  修改这里：把前端传来的 NickName 存入数据库的 RealName
 		RealName:   req.NickName,
 		Role:       req.Role,
 		DistrictId: distIdPtr,

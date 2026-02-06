@@ -2,7 +2,10 @@ package manage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"qianhao-backend/internal/utils"
 
 	"qianhao-backend/internal/model"
 	"qianhao-backend/internal/svc"
@@ -43,6 +46,22 @@ func (l *DeletePhoneLogic) DeletePhone(req *types.DeletePhoneReq) (resp *types.L
 		return nil, errors.New("删除失败")
 	}
 
+	// 插入日志
+	var userId int
+	if uidNumber, ok := l.ctx.Value("userId").(json.Number); ok {
+		uidInt64, _ := uidNumber.Int64()
+		userId = int(uidInt64)
+	}
+
+	username := "Admin"
+	if u, ok := l.ctx.Value("username").(string); ok {
+		username = u
+	}
+
+	// 记录被删除的号码ID
+	targetId := fmt.Sprintf("%d", req.Id)
+
+	utils.AddLog(l.svcCtx, userId, username, "删除号码", targetId, "")
 	// 复用 LoginRes 返回一个成功消息
 	return &types.LoginRes{Token: "deleted_success"}, nil
 }

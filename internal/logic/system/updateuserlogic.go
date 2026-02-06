@@ -44,7 +44,7 @@ func (l *UpdateUserLogic) UpdateUser(req *types.UpdateUserReq) (resp *types.Logi
 		distIdPtr = nil
 	}
 
-	// ✅ 修改这里：更新 RealName
+	// 修改这里：更新 RealName
 	user.RealName = req.NickName
 	user.Role = req.Role
 	user.DistrictId = distIdPtr

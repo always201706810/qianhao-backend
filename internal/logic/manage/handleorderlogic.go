@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json" // 引入 json
 	"errors"
+	"fmt"
 	"time"
 
 	"qianhao-backend/internal/model"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
+
+	"qianhao-backend/internal/utils"
 )
 
 type HandleOrderLogic struct {
@@ -137,6 +140,30 @@ func (l *HandleOrderLogic) HandleOrder(req *types.HandleOrderReq) (resp *types.L
 	if transactionErr != nil {
 		return nil, transactionErr
 	}
+	// ==========================================
+	// 3. 新增：这里是插入日志的最佳位置
+	// ==========================================
+	// 只有当 transactionErr == nil (操作成功) 时才会执行到这里
 
+	// 构造日志动作描述
+	logAction := "处理订单"
+	switch req.Action {
+	case 1:
+		logAction = "处理订单:重置待沟通"
+	case 2:
+		logAction = "处理订单:通过/已办理"
+	case 3:
+		logAction = "处理订单:拒绝/释放"
+	}
+
+	// 记录操作日志 (异步执行，不影响接口返回速度)
+	// 参数说明:
+	// - svcCtx: 上下文
+	// - userId: 当前管理员ID
+	// - username: 当前管理员名字 (我们上面已经查出来了 currentUser)
+	// - action: 动作名称
+	// - targetId: 被操作的订单ID (需要转成 string)
+	// - ip: 暂时留空
+	utils.AddLog(l.svcCtx, int(currentUser.Id), currentUser.Username, logAction, fmt.Sprintf("%d", req.OrderId), "")
 	return &types.LoginRes{Token: "handle_success"}, nil
 }

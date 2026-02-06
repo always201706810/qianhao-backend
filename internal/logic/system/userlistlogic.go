@@ -53,7 +53,7 @@ func (l *UserListLogic) UserList(req *types.PageReq) (resp *types.UserListRes, e
 		list = append(list, types.UserInfo{
 			Id:       item.Id,
 			Username: item.Username,
-			// ✅ 修改这里：数据库取出来的是 RealName，赋值给 API 的 NickName
+			// 修改这里：数据库取出来的是 RealName，赋值给 API 的 NickName
 			NickName:     item.RealName,
 			Role:         item.Role,
 			DistrictId:   distId,

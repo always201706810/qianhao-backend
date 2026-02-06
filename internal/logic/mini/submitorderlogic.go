@@ -36,16 +36,31 @@ func (l *SubmitOrderLogic) SubmitOrder(req *types.SubmitOrderReq) (resp *types.S
 	if req.Openid == "" {
 		return nil, errors.New("用户信息异常(OpenID缺失)")
 	}
-	// ✅ 新增：校验区县ID是否合法
 	if req.UserInfo.DistrictId <= 0 {
 		return nil, errors.New("请选择业务办理区县")
 	}
 
-	// ✅ 新增：去数据库查一下这个 DistrictId 是否真的存在
+	// 校验区县是否存在
 	var districtCount int64
 	l.svcCtx.Db.Model(&model.SysDistrict{}).Where("id = ?", req.UserInfo.DistrictId).Count(&districtCount)
 	if districtCount == 0 {
 		return nil, errors.New("选择的区县无效或不存在")
+	}
+
+	// 新增：每日限购检查 (限制 5 单)
+	// 计算逻辑：已经提交的订单数 + 加上本次准备提交的 > 5 则报错
+	var todayCount int64
+	// 获取今天的 00:00:00
+	todayStart := time.Now().Format("2006-01-02") + " 00:00:00"
+
+	l.svcCtx.Db.Model(&model.BusinessOrder{}).
+		Where("openid = ? AND apply_time >= ?", req.Openid, todayStart).
+		Count(&todayCount)
+
+	if todayCount+int64(len(req.SelectedNumbers)) > 5 {
+		msg := fmt.Sprintf("您今日已发起 %d 次预约，每日限额 5 次，本次最多还可预约 %d 次",
+			todayCount, 5-todayCount)
+		return nil, errors.New(msg)
 	}
 
 	expireTime := time.Now().Add(48 * time.Hour)
@@ -58,12 +73,6 @@ func (l *SubmitOrderLogic) SubmitOrder(req *types.SubmitOrderReq) (resp *types.S
 			result := tx.Model(&model.PhonePool{}).
 				Where("id = ? AND status = 0", item.Id).
 				Update("status", 1)
-
-			// ✅ 【测试专用】在这里加延时！
-			// 模拟数据库处理很慢，或者网络卡顿，强行持有锁 10秒
-			//fmt.Println(">>> 模拟并发：用户抢到了锁，正在处理中 (Sleep 10s)...")
-			//time.Sleep(2 * time.Second)
-			// ------------------------------------------------
 
 			if result.Error != nil {
 				return result.Error
@@ -84,12 +93,11 @@ func (l *SubmitOrderLogic) SubmitOrder(req *types.SubmitOrderReq) (resp *types.S
 				CustomerName:    req.UserInfo.Name,
 				CustomerPhone:   req.UserInfo.Phone,
 				CustomerAddress: req.UserInfo.Address,
-				// ✅ 修改这里：使用前端传入的 DistrictId
-				DistrictId: req.UserInfo.DistrictId,
-				Status:     1,
-				Openid:     req.Openid,
-				ApplyTime:  time.Now(),
-				ExpireTime: expireTime,
+				DistrictId:      req.UserInfo.DistrictId,
+				Status:          1,
+				Openid:          req.Openid,
+				ApplyTime:       time.Now(),
+				ExpireTime:      expireTime,
 			}
 
 			if req.UserInfo.Remark != "" {

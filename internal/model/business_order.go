@@ -9,7 +9,7 @@ type BusinessOrder struct {
 	CustomerAddress string `gorm:"column:customer_address"`
 	PhoneId         int    `gorm:"column:phone_id"`
 	DistrictId      int    `gorm:"column:district_id"`
-	// ✅ 新增
+	// 新
 	Openid      string     `gorm:"column:openid"`
 	AdminId     *int       `gorm:"column:admin_id"` // 指针类型，允许为 null
 	Status      int        `gorm:"column:status"`

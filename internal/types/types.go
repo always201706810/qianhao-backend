@@ -40,19 +40,21 @@ type DistrictListRes struct {
 }
 
 type PhoneInfo struct {
-	Id           int    `json:"id"`
-	PhoneNumber  string `json:"phone_number"`
-	Category     string `json:"category"`
-	Grade        int    `json:"grade"`
-	Status       int    `json:"status"`
-	DistrictName string `json:"district_name"` // <--- 新增：显示区县名
-	DistrictId   int    `json:"district_id"`   // <--- 新增：编辑回显用
+	Id           int     `json:"id"`
+	PhoneNumber  string  `json:"phone_number"`
+	Category     string  `json:"category"`
+	Grade        int     `json:"grade"`
+	Price        float64 `json:"price,optional"` //  看价格
+	Status       int     `json:"status"`
+	DistrictName string  `json:"district_name"` // <--- 新增：显示区县名
+	DistrictId   int     `json:"district_id"`   // <--- 新增：编辑回显用
 }
 
 type ImportItem struct {
-	PhoneNumber string `json:"phone_number"`
-	Category    string `json:"category"`
-	Grade       int    `json:"grade"`
+	PhoneNumber string  `json:"phone_number"`
+	Category    string  `json:"category"`
+	Grade       int     `json:"grade"`
+	Price       float64 `json:"price,optional"` //  新增：允许导入价格
 }
 
 type ImportPhonesReq struct {
@@ -64,10 +66,11 @@ type ImportPhonesRes struct {
 }
 
 type PhoneListReq struct {
-	Category string `form:"category,optional"`
-	Grade    int    `form:"grade,optional"`
-	Page     int    `form:"page"`
-	Size     int    `form:"size"`
+	Category    string `form:"category,optional"`
+	Grade       int    `form:"grade,optional"`
+	Page        int    `form:"page"`
+	Size        int    `form:"size"`
+	PhoneNumber string `form:"phone_number,optional"` // 查号码
 }
 
 type PhoneListRes struct {
@@ -80,11 +83,12 @@ type DeletePhoneReq struct {
 }
 
 type UpdatePhoneReq struct {
-	Id          int    `json:"id"`
-	PhoneNumber string `json:"phone_number"`
-	Category    string `json:"category"`
-	Grade       int    `json:"grade"`
-	DistrictId  int    `json:"district_id,optional"` // <--- 新增：允许修改关联订单的区县
+	Id          int     `json:"id"`
+	PhoneNumber string  `json:"phone_number"`
+	Category    string  `json:"category"`
+	Grade       int     `json:"grade"`
+	Price       float64 `json:"price,optional"`       //新增：允许修改价格
+	DistrictId  int     `json:"district_id,optional"` // <--- 新增：允许修改关联订单的区县
 }
 
 type OrderCreateReq struct {
@@ -198,7 +202,7 @@ type MiniNumberItem struct {
 	FullNumber string  `json:"fullNumber"`
 	Level      int     `json:"level"`
 	LevelName  string  `json:"levelName"`
-	Price      float64 `json:"price"` // ✅ 新增价格
+	Price      float64 `json:"price"` //  新增价格
 	Category   string  `json:"category"`
 	IsLocked   bool    `json:"isLocked"`
 	Tag        string  `json:"tag"`
@@ -227,7 +231,7 @@ type CheckStatusReq struct {
 type CheckStatusRes struct {
 	IsLocked   bool    `json:"isLocked"`
 	LockedByMe bool    `json:"lockedByMe"`
-	Price      float64 `json:"price"` // ✅ 返回价格方便前端计算
+	Price      float64 `json:"price"` //  返回价格方便前端计算
 }
 
 type SelectedNumber struct {

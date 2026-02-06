@@ -38,7 +38,7 @@ func main() {
 	// Cron 表达式: "秒 分 时 日 月 周"
 	// "0 */5 * * * *" 代表每5分钟
 	// 为了测试方便，你可以先改成 "*/30 * * * * *" (每30秒一次)
-	cRunner.AddFunc("*/5 * * * *", expireJob.Run)
+	cRunner.AddFunc("0 */10 * * * *", expireJob.Run)
 
 	cRunner.Start()
 	defer cRunner.Stop()

@@ -44,7 +44,7 @@ func (l *CheckStatusLogic) CheckStatus(req *types.CheckStatusReq) (resp *types.C
 		if phone.Status > 0 {
 			isLocked = true
 
-			// ✅ 修改逻辑：只要是非空闲状态，都去查一下是不是我的
+			// 修改逻辑：只要是非空闲状态，都去查一下是不是我的
 			var count int64
 			// 查询条件：号码ID + 我的OpenID + 状态是(1或2)
 			l.svcCtx.Db.Model(&model.BusinessOrder{}).

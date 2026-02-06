@@ -71,13 +71,13 @@ func (l *LoginLogic) Login(req *types.LoginReq) (resp *types.LoginRes, err error
 		return nil, errors.New("生成Token失败")
 	}
 
-	// ✅ 修改返回值：填入用户信息
+	// 修改返回值：填入用户信息
 	var distId int
 	if user.DistrictId != nil {
 		distId = *user.DistrictId
 	}
 
-	// ✅ 插入日志 (异步)
+	//插入日志 (异步)
 	go func() {
 		// 获取 IP (暂时写死，后面教你通过 Context 传)
 		clientIp := "127.0.0.1"

@@ -7,7 +7,7 @@ type PhonePool struct {
 	PhoneNumber string `gorm:"column:phone_number;unique"` // 唯一索引
 	Category    string `gorm:"column:category"`
 	Grade       int    `gorm:"column:grade"`
-	// ✅ 新增
+	// 新增
 	Price        float64 `gorm:"column:price"`
 	Status       int     `gorm:"column:status"` // 0-可选
 	ImportUserId int     `gorm:"column:import_user_id"`

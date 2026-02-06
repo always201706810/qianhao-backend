@@ -3,7 +3,7 @@ package mini
 import (
 	"context"
 	"fmt"
-	// ✅ 删除了 strings 和 strconv，因为 Grade 是 int，不需要解析了
+	//  删除了 strings 和 strconv，因为 Grade 是 int，不需要解析了
 
 	"qianhao-backend/internal/model"
 	"qianhao-backend/internal/svc"
@@ -61,7 +61,7 @@ func (l *GetNumbersLogic) GetNumbers(req *types.MiniNumberListReq) (resp *types.
 	// 4. 转换数据格式
 	var list []types.MiniNumberItem
 	for _, p := range phones {
-		// ✅ 修复：Grade 是 int，直接使用
+		// 修复：Grade 是 int，直接使用
 		levelInt := p.Grade
 		levelName := fmt.Sprintf("%d级", p.Grade) // 拼接显示名称
 
