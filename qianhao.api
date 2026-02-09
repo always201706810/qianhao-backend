@@ -224,9 +224,6 @@ type UpdateUserReq {
 	Password   string `json:"password,optional"` // 留空则不修改
 }
 
-
-
-
 // --- 日志相关 ---
 
 type LogItem {
@@ -367,6 +364,16 @@ type (
 	}
 )
 
+// 每日限额
+type UserStatsReq {
+	Openid string `form:"openid"` // 通过 GET 参数传递
+}
+
+type UserStatsRes {
+	TodayCount int `json:"todayCount"` // 今日已预约数量
+	Limit      int `json:"limit"`      // 每日总限额 (固定为 5)
+}
+
 // =============================
 // 2. 接口服务定义
 // =============================
@@ -477,4 +484,8 @@ service qianhao-api {
 
 	@handler WxLogin
 	get /openid (WxLoginReq) returns (WxLoginRes)
+	// 获取用户今日预约统计
+	@handler GetUserStats
+	get /user/stats (UserStatsReq) returns (UserStatsRes)
+
 }

@@ -231,7 +231,7 @@ type CheckStatusReq struct {
 type CheckStatusRes struct {
 	IsLocked   bool    `json:"isLocked"`
 	LockedByMe bool    `json:"lockedByMe"`
-	Price      float64 `json:"price"` //  返回价格方便前端计算
+	Price      float64 `json:"price"` // 返回价格方便前端计算
 }
 
 type SelectedNumber struct {
@@ -299,4 +299,13 @@ type WxLoginRes struct {
 	Openid string `json:"openid"`
 	Token  string `json:"token"` // 这里可以返回 openid 作为临时 token
 	Expire int64  `json:"expire"`
+}
+
+type UserStatsReq struct {
+	Openid string `form:"openid"` // 通过 GET 参数传递
+}
+
+type UserStatsRes struct {
+	TodayCount int `json:"todayCount"` // 今日已预约数量
+	Limit      int `json:"limit"`      // 每日总限额 (固定为 5)
 }

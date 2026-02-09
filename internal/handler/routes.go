@@ -143,6 +143,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/openid",
 				Handler: mini.WxLoginHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/user/stats",
+				Handler: mini.GetUserStatsHandler(serverCtx),
+			},
 		},
 		rest.WithPrefix("/api/v1/mini"),
 	)
